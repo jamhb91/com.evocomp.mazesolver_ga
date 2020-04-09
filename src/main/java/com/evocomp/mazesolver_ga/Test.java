@@ -5,8 +5,10 @@
  */
 package com.evocomp.mazesolver_ga;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -49,16 +51,16 @@ public class Test extends JFrame{
     public static List<Position> walls = null;
     public static MazeSolver mSolver;
     public static int generation = 0;
-    public static int interval = 20;
+    public static int interval = 5;
     public static Timer timer = new Timer();
     
     //GA Configuration
     public static Position initial = new Position(2,2);
-    public static Position target = new Position(22,36);
+    public static Position target = new Position(30,16);
     public static int matrixSize = 40;
     public static int chromosomeSize = 40*3;
     public static int generationSize = 400;
-    public static int maximumGenerations = 5000;
+    public static int maximumGenerations = 3000;
     public static int maximumMutation = 10;
     public static int matchSize = 5;
     public static int elitism = 0;
@@ -66,29 +68,29 @@ public class Test extends JFrame{
     
     
     public Test() {
-        super("XY Line Chart for Solution");
+        super("Maze Solver Genetic Algorithm");
         
         initializeOutput();
  
         solutionCollection = new XYSeriesCollection();
-        solutionSeries = new XYSeries("Solution with current coeficients");
+        solutionSeries = new XYSeries("Maze");
         
         chartSolutionPanel = createPathChartPanel();
         
          
         distanceCollection = new XYSeriesCollection();
-        distanceSeries = new XYSeries("Distance from solution with current coeficients");
+        distanceSeries = new XYSeries("Best Fitness VS Generation");
         
         chartDistancePanel = createDistanceChartPanel();
         
         mainPanel = new JPanel();
-        mainPanel.setSize(1280,480);
+        mainPanel.setSize(1120,480);
         
         mainPanel.add(chartSolutionPanel);
         mainPanel.add(chartDistancePanel);
         add(mainPanel);
  
-        setSize(1320,520);
+        setSize(1160,540);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
@@ -162,16 +164,19 @@ public class Test extends JFrame{
         //System.out.println("Muting generation...");
         mSolver.MuteGeneration(mutated,maximumMutation);
         mSolver.CalculateDistances(mutated);
-
-        solutionCollection.removeAllSeries();
-        solutionCollection.addSeries(getCurrentPathSeries(MazeSolverUtilities.GetPath(initial, target, generationBest.getChromosome())));
-        solutionCollection.addSeries(getInitialSeries());
-        solutionCollection.addSeries(getTargetSeries());
-        solutionCollection.addSeries(getWallsSeries());
         
-        distanceSeries.add(generation, generationBest.getDistance());
-        distanceCollection.removeAllSeries();
-        distanceCollection.addSeries(distanceSeries);
+        //graph every 10 gen to reduce overload
+        if(generation%20==0){
+            solutionCollection.removeAllSeries();
+            solutionCollection.addSeries(getCurrentPathSeries(MazeSolverUtilities.GetPath(initial, target, generationBest.getChromosome())));
+            solutionCollection.addSeries(getInitialSeries());
+            solutionCollection.addSeries(getTargetSeries());
+            solutionCollection.addSeries(getWallsSeries());
+
+            distanceSeries.add(generation, generationBest.getDistance());
+            distanceCollection.removeAllSeries();
+            distanceCollection.addSeries(distanceSeries);
+        }
         
         previousOutput = output;
         output = mutated;
@@ -191,26 +196,41 @@ public class Test extends JFrame{
                 false                     // urls
         );
         
+        //Renderer
         XYPlot plot = (XYPlot) chart.getPlot();
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
         renderer.setSeriesLinesVisible(0, true);
         renderer.setSeriesPaint(0, Color.MAGENTA);
+        renderer.setSeriesStroke(0, new BasicStroke(3));
+        renderer.setSeriesShapesVisible(0, false);
         renderer.setSeriesLinesVisible(1, false);
-        renderer.setSeriesPaint(1, Color.BLUE);
+        renderer.setSeriesPaint(1, Color.YELLOW  );
+        renderer.setSeriesShape(1, new Rectangle(10,10));
         renderer.setSeriesLinesVisible(2, false);
         renderer.setSeriesPaint(2, Color.GREEN);
+        renderer.setSeriesShape(2, new Rectangle(10,10));
         renderer.setSeriesLinesVisible(3, false);
         renderer.setSeriesPaint(3, Color.BLACK);
+        renderer.setSeriesShape(3, new Rectangle(6,6));
         plot.setBackgroundPaint(Color.WHITE);
         plot.setRenderer(renderer);
         
+        //Axis
         NumberAxis xAxis =(NumberAxis)plot.getDomainAxis();
         xAxis.setTickUnit(new NumberTickUnit(1));
+        xAxis.setTickLabelsVisible(false);
+        xAxis.setLowerBound(-1);
+        xAxis.setUpperBound(40);
+        xAxis.setAxisLinePaint(Color.GRAY);
         NumberAxis yAxis =(NumberAxis)plot.getRangeAxis();
         yAxis.setTickUnit(new NumberTickUnit(1));
+        yAxis.setTickLabelsVisible(false);
+        yAxis.setLowerBound(-1);
+        yAxis.setUpperBound(40);
+        yAxis.setAxisLinePaint(Color.GRAY);
         
         ChartPanel cp = new ChartPanel(chart);
-        cp.setPreferredSize(new Dimension(640,480));
+        cp.setPreferredSize(new Dimension(480,480));
         return cp;
     }
     
@@ -243,9 +263,9 @@ public class Test extends JFrame{
     }
     
     private JPanel createDistanceChartPanel() {
-        String chartTitle = "Sum Distance from solution";
+        String chartTitle = "Best Fitness vs Generation";
         String xAxisLabel = "Generation";
-        String yAxisLabel = "Best Distance";
+        String yAxisLabel = "Fitness";
 
         JFreeChart chart = ChartFactory.createXYLineChart(chartTitle,
                 xAxisLabel, yAxisLabel, distanceCollection);

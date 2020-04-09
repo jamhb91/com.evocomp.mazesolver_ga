@@ -31,7 +31,7 @@ public class MazeSolver {
     
     private final List<Position> Walls;
     
-    private final int MOVEMENTS = 5;
+    private final int MOVEMENTS = 4;
     
     public MazeSolver(int ChromosomeSize, int population, int matchSize, Position initialPos, Position target, List<Position> walls, int matrixSize){
         this.MAX_CHROMOSOME_SIZE = ChromosomeSize;
@@ -56,7 +56,7 @@ public class MazeSolver {
         Integer [] chromosome = new Integer[MAX_CHROMOSOME_SIZE];
         Random random = new Random();
         for (int i = 0; i < chromosome.length; i++) {
-            chromosome[i] = random.nextInt(MOVEMENTS);
+            chromosome[i] = random.nextInt(MOVEMENTS) +1;
         }
         return chromosome;
     }
@@ -65,6 +65,7 @@ public class MazeSolver {
         double result = 0;
         Position currentPosition = INITIAL_POSITION;
         boolean targetReach = false;
+        int steps = 0;
         for (Integer gen : chromosome) {
             currentPosition = MazeSolverUtilities.GetNextPosition(currentPosition, gen);
             result = result + CalculateDistance(currentPosition);
@@ -73,11 +74,15 @@ public class MazeSolver {
                 targetReach=true;
                 break;
             }
+            else{
+                steps++;
+            }
         }
         
         Set duplicates = findDuplicates(Arrays.asList(chromosome));
         if(!targetReach){result = result + MAX_CHROMOSOME_SIZE*10;}
-        result = result + duplicates.size()*MAX_CHROMOSOME_SIZE*3;
+        result = result + duplicates.size()*MAX_CHROMOSOME_SIZE*4;
+        result = result + steps*MAX_CHROMOSOME_SIZE*2;
         return result;
     }
     
@@ -181,9 +186,9 @@ public class MazeSolver {
         Random r = new Random();
         Integer [] muted = Arrays.copyOf(array, array.length);
         int position = r.nextInt(MAX_CHROMOSOME_SIZE);
-        muted[position] = r.nextInt(MOVEMENTS);
+        muted[position] = r.nextInt(MOVEMENTS) +1;
         position = r.nextInt(MAX_CHROMOSOME_SIZE);
-        muted[position] = r.nextInt(MOVEMENTS);
+        muted[position] = r.nextInt(MOVEMENTS) +1;
         return muted;
         //System.out.println(">Original: " + Arrays.toString(array));
         //System.out.println(">   Muted: " + Arrays.toString(muted));
